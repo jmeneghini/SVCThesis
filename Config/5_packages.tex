@@ -46,12 +46,26 @@
 
 \usepackage{tcolorbox}    % pretty print color boxes
 
+\usepackage[separate-uncertainty]{siunitx} % units and physics macros
+\usepackage{physics}
+\AtBeginDocument{\RenewCommandCopy\qty\SI}
+
+\usepackage{bm} % bold math
+
+\usepackage{booktabs} 
+
+\usepackage{mathptmx} % times new roman math chars
+
+
+
 % \usepackage{indentfirst}       % Indent first list after a (sub)section title
 
 % \usepackage{algorithm2e}
 % \RestyleAlgo{ruled}
 
-% \usepackage{minted}    % Fontification of source code listings
+
+
+\usepackage{minted}    % Fontification of source code listings
 
 % \usepackage{listings}    % Fontification of source code listingsConfig/5_packages.tex
 %                          % In alternative, use the package “minted” (highly recomended)
