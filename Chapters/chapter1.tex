@@ -11,15 +11,14 @@
 \chapter{X-ray Tracing}
 \label{cha:xray_tracing}
 
-\par Computed Tomography (CT) imaging is a critical diagnostic tool used by medical professionals to diagnose various illnesses and injuries. While the use of CT imaging is essential to provide immediate, life-saving results, ionizing radiation can damage cells and increase the risk of cancer. While the risk is small, it is cumulative, so physicians must track a patient's radiation exposure over time \cite{lauer2009elements}. Typically, exposure is measured using absorbed dose in the body and air kerma at the skin layer, which both have units of grays (joule/kg), making it directly related to the energy deposited by photons and their secondary particles. Often, these values are estimated based on the properties of the x-ray source and the specific procedure being performed. However, the most accurate estimation techniques use Monte Carlo (MC) methods to simulate the propagation of photons through a computational phantom \cite{essmedphys2012}. 
-\par In the MC technique, the 3D space encompassing the phantom and the radiation source is represented as a computational domain. Within this domain, individual photon interactions are stochastically simulated, accounting for each interaction event as photons navigate the phantom. Such stochastic simulation offers unparalleled precision, capturing even the most subtle nuances of radiation behavior in biological media. Additionally, the MC method can simulate various medium types, densities, and configurations, making it incredibly versatile and adaptable to various imaging tests. Furthermore, advancements in computational power and algorithms have expedited MC simulation, rendering it more accessible and feasible for routine clinical applications \cite{fernandez_bosman_validation_2021}.
-\par In this paper, the newly developed, open-source MC photon transport code system MIDSX is presented and validated. While many existing MC transport code systems perform reliably in dosimetry applications \cite{fernandez_bosman_validation_2021, geant4valid2004}, many of these systems are tailored for general particle transport. The developmental focus of MIDSX on x-ray transport reduces the complexity of implementation and allows users to easily design and run simulations specifically relating to x-ray transport in the medical imaging energy range. The subsequent sections will delve into the theory of MIDSX, compare results from MIDSX to accepted benchmarks from established simulation systems, and outline future work.
+% \par Computed Tomography (CT) imaging is a critical diagnostic tool used by medical professionals to diagnose various illnesses and injuries. While the use of CT imaging is essential to provide immediate, life-saving results, ionizing radiation can damage cells and increase the risk of cancer. While the risk is small, it is cumulative, so physicians must track a patient's radiation exposure over time \cite{lauer2009elements}. Typically, exposure is measured using absorbed dose in the body and air kerma at the skin layer, which both have units of grays (joule/kg), making it directly related to the energy deposited by photons and their secondary particles. Often, these values are estimated based on the properties of the x-ray source and the specific procedure being performed. However, the most accurate estimation techniques use Monte Carlo (MC) methods to simulate the propagation of photons through a computational phantom \cite{essmedphys2012}. 
+% \par In the MC technique, the 3D space encompassing the phantom and the radiation source is represented as a computational domain. Within this domain, individual photon interactions are stochastically simulated, accounting for each interaction event as photons navigate the phantom. Such stochastic simulation offers unparalleled precision, capturing even the most subtle nuances of radiation behavior in biological media. Additionally, the MC method can simulate various medium types, densities, and configurations, making it incredibly versatile and adaptable to various imaging tests. Furthermore, advancements in computational power and algorithms have expedited MC simulation, rendering it more accessible and feasible for routine clinical applications \cite{fernandez_bosman_validation_2021}.
+% \par In this paper, the newly developed, open-source MC photon transport code system MIDSX is presented and validated. While many existing MC transport code systems perform reliably in dosimetry applications \cite{fernandez_bosman_validation_2021, geant4valid2004}, many of these systems are tailored for general particle transport. The developmental focus of MIDSX on x-ray transport reduces the complexity of implementation and allows users to easily design and run simulations specifically relating to x-ray transport in the medical imaging energy range. The subsequent sections will delve into the theory of MIDSX, compare results from MIDSX to accepted benchmarks from established simulation systems, and outline future work.
 
-\section{Ray Tracing}
-\par Ray tracing is a computer graphics technique that involves tracing the path of rays as they pass through a virtual scene. Due to its ability to create highly-realistic images, it has been used extensively in animations, video games, scientific computing, and by designers who need a physically accurate design of a product. While not the only rendering technique or the fastest in computer graphics, its ability to consistently produce physically realistic renders has made it an indispensable tool in many industries. By accurately simulating the behavior of light, ray tracing can capture intricate details of how light interacts with objects, resulting in realistic shadows, reflections, refractions, and global illumination effects. This level of visual fidelity allows for the creation of visually stunning and immersive experiences that were previously challenging to achieve. As hardware capabilities continue to advance and real-time ray tracing becomes more accessible, its applications are expanding, and its impact on various fields is growing, pushing the boundaries of what is possible in computer graphics and visual simulation. \cite{Peddie}
+% \section{Ray Tracing}
+\par Ray tracing is a computer graphics technique that involves tracing the path of rays as they pass through a virtual scene. Due to its ability to create highly-realistic images, it has been used extensively in animations, video games, scientific computing, and by designers who need a physically accurate design of a product. While not the only rendering technique or the fastest in computer graphics, its ability to consistently produce physically realistic renders has made it an indispensable tool in many industries. By accurately simulating the behavior of light, ray tracing can capture intricate details of how light interacts with objects, resulting in realistic shadows, reflections, refractions, and global illumination effects. This level of visual fidelity allows for the creation of visually stunning and immersive experiences that were previously challenging to achieve. As hardware capabilities continue to advance and real-time ray tracing becomes more accessible, its applications are expanding, and its impact on various fields is growing, pushing the boundaries of what is possible in computer graphics and visual simulation \cite{Peddie}.
 
 \subsection{The Brute Force Algorithm}
-
 The rays in a scene are described mathematically as the parametric representation of a line. In three dimensions, the point at the end of the line $\va*{r}$ at parameter $t$ is given by the following equation:
 
 \begin{equation}
@@ -27,7 +26,7 @@ The rays in a scene are described mathematically as the parametric representatio
 \label{eq:parametric_ray}
 \end{equation}
 
-\noindent where $\va*{r_0}$ points from the origin to the start of the line and $\vu*{d}$ is a unit vector parallel to the direction of the line. The described ray is shown in Figure \ref{fig:ray_diagram}.\\
+\noindent where $\va*{r_0}$ points from the origin to the start of the line and $\vu*{d}$ is a unit vector parallel to the direction of the line. The described ray is shown in Figure~\ref{fig:ray_diagram}.\\
 
 \begin{figure}[H]
     \centering
@@ -36,11 +35,11 @@ The rays in a scene are described mathematically as the parametric representatio
 	\label{fig:ray_diagram}
 \end{figure}
 
-\par Unlike in real life where light rays end at a camera, we instead trace light rays from the camera to locations in the scene. While one could trace light rays from a light source (forward ray tracing), many of these rays would end up missing the camera entirely, not affecting the image. More efficiently, the light rays are instead traced from the camera to the light source (backward ray tracing), drastically cutting back on the computational load while producing an identical image for most practical cases. \cite{Peddie} So, in the case of backward ray tracing, the method used in this research, rays are emitted from the camera; therefore, $\va*{r_0}$ represents the location of the camera in the scene.
+\par Unlike in real life where light rays end at a camera, we instead trace light rays from the camera to locations in the scene. While one could trace light rays from a light source (forward ray tracing), many of these rays would end up missing the camera entirely, not affecting the image. More efficiently, the light rays are instead traced from the camera to the light source (backward ray tracing), drastically cutting back on the computational load while producing an identical image for most practical cases \cite{Peddie}. So, in the case of backward ray tracing, the method used in this research, rays are emitted from the camera; therefore, $\va*{r_0}$ represents the location of the camera in the scene.
 
-\par To define the area of the scene visible from the point of view of the camera, one can create a rectangular area in which all rays pass through, called a viewport. Increasing the size of the viewport increases the amount of the scene that is visible in the final image, and vice versa. This viewport is broken up into a grid, the resolution of which determines the resolution of the final image. Rays are then sent through each point in this grid and out into the scene.
+\par To define the area of the scene visible from the point of view of the camera, one can create a rectangular surface in which all rays pass through, called a viewport. Increasing the size of the viewport increases the amount of the scene that is visible in the final image, and vice versa. This viewport is broken up into a grid, the resolution of which determines the resolution of the final image. Rays are then sent through each point in this grid and out into the scene.
 
-\par So far, we have a camera, light rays, and a way to define what parts of the scene are visible; all three of which are visualized in Figure \ref{fig:basic_ray_tracing_setup}. It is important to note that, by convention, the $z$-axis in the scene points opposite the viewport.
+\par So far, we have a camera, light rays, and a way to define what parts of the scene are visible; all three of which are visualized in Figure~\ref{fig:basic_ray_tracing_setup}. It is important to note that, by convention, the $z$-axis in the scene points opposite the viewport.
 
 \begin{figure}[H]
   \centering
@@ -56,7 +55,7 @@ The rays in a scene are described mathematically as the parametric representatio
   \label{eq:LHC}
 \end{equation}
 
-\noindent which was obtained visually from Figure \ref{fig:LHC_diagram}. \cite{Shirley}
+\noindent which was obtained geometrically from Figure~\ref{fig:LHC_diagram} \cite{Shirley}.
 
 \begin{figure}[H]
     \centering
@@ -66,29 +65,172 @@ The rays in a scene are described mathematically as the parametric representatio
 	\label{fig:LHC_diagram}
 \end{figure}
 
-\par With $\val{LHC}$ pointing to the left-hand-corner of the viewport in the scene, $\val{HO}$ and $\val{VE}$ can be scaled to define a ray pointing from the camera to any point on the viewport. In particular,  the viewport's horizontal and vertical coordinates, $u$ and $v$, are defined as such,
+\par With $\val{LHC}$ pointing to the left-hand-corner of the viewport in the scene, $\val{HO}$ and $\val{VE}$ can be scaled to define a ray pointing from the camera to any point on the viewport. In particular,  the viewport's horizontal and vertical coordinates, $u_i$ and $v_j$, are defined as such,
 
 \begin{align}
-u &= i/(\text{image width} - 1),\\
-v &= j/(\text{image height} - 1),
+u_i &= i/(\text{image width} - 1);\\
+v_j &= j/(\text{image height} - 1),
 \label{eq:viewport_coords}
 \end{align}
 
-\noindent where the image width and height are the resolution of the rendered image, $i$ is an integer ranging from [0, image width - 1], and $j$ is an integer ranging from [0, pixel height - 1]. Note that both $u$ and $v$ range from [0, 1].
+\noindent where the image width and height are the resolution of the rendered image, $i$ is an integer ranging from [0, image width - 1], and $j$ is an integer ranging from [0, image height - 1]. Note that both $u_i$ and $v_j$ range from [0, 1].
 
-\par Therefore, using these newly defined viewport coordinates, a ray taking the form of Equation \ref{eq:parametric_ray}, pointing from the camera to the pixel coordinates $(i, j)$ is given by the following equation:
+\par Therefore, using these newly defined viewport coordinates, a ray taking the form of Equation~\ref{eq:parametric_ray}, pointing from the camera to the pixel coordinates $(i, j)$ is given by the following equation:
 
 \begin{equation}
-  \va*{r}{\bm{i,j}}(t) = \va*{r_0} + t \left( \val{LHC} + u_i \val{HO}  + v_j \val{VE} - \val{A} \right),
+  \va*{r}_{\bm{i,j}}(t) = \va*{r_0} + t \left( \val{LHC} + u_i \val{HO}  + v_j \val{VE} \right),
   \label{eq:ray_to_viewport}
 \end{equation}
 
-\noindent which is represented geometrically in Figure \ref{fig:ray_to_viewport_diagram}. \cite{Shirley}
+\noindent which is represented geometrically in Figure~\ref{fig:ray_to_viewport_diagram} \cite{Shirley}.
 
 \begin{figure}[H]
   \centering
-\includegraphics[width = 0.8\textwidth]{RayToViewportDiagram.pdf}
-\caption{A diagram showing the geometric representation of Equation \ref{eq:ray_to_viewport}.}
+\includegraphics[width = 0.7\textwidth]{RayToViewportDiagram.pdf}
+\caption{A diagram showing the geometric representation of Equation~\ref{eq:ray_to_viewport}.}
 \label{fig:ray_to_viewport_diagram}
 \end{figure}
+
+\subsection{Ray-Triangle Intersections}
+\par With the end goal to be able ray-trace x-rays through an arbitrary user-defined mesh, we first need to choose which shape to compose said mesh with. Due to its efficient ray-intersection algorithm and its ease of parallelization on Graphics Processing Units (GPUs), these constituents, referred to as primitives, are typically chosen to be triangles. This following section will develop the ray-triangle intersection algorithm used by the x-ray tracer. In particular, the algorithm used was invented by Tomas Möller and Ben Trumbor, and is subsequentially refered to as the Möller-Trumbore ray-triangle intersection algorithm \cite{moller2005fast}. 
+
+\subsubsection*{Barycentric Coordinates}
+\par To motivate the unique coordinate system used by the algorithm, let us first review the concept of center of mass for 3 massive point particles. If 3 objects each have their own location in space $\va*{r_i}$, each with mass $m_i$, the center of mass $\va*{R}$ is given by:
+
+\begin{equation}
+  \va*{R} = \frac{m_1 \va*{r_1} + m_2 \va*{r_2} + m_3 \va*{r_3}}{m_1 + m_2 + m_3}.
+  \label{eq:com}
+\end{equation}
+
+Notice a few properties of $\va*{R}$ that are intuitively clear:
+
+\begin{itemize}
+\item $\va*{R}$ will always lie in the plane containing the point particles.
+\item $\va*{R}$ will always lie in the triangle $T$ with vertices \{$\va*{r_i}$\}.
+\end{itemize}
+
+\noindent This means that by changing \{$m_i$\}, $\va*{R}$ will span all set of points in T. This is the motivation behind barycentric coordinates, the coordinate system employed by Möller and Trumbore. In particular, to represent a vector $\va*{v}$ pointing to the surface of a triangle $T \in \mathbb{R}^3$ with vertices $\va*{v_0}$, $\va*{v_1}$, and $\va*{v_2}$, barycentric coordinates can be utilized. These coordinates \{$\alpha, \beta, \gamma\}\in \mathbb{R}$ act as the masses of the vertices of $T$. Thus, any point $\va*{v}$ along the plane $P$ of $T$ can be represented by 
+
+\begin{equation}
+\va*{v} = \alpha \va*{v_0} + \beta \va*{v_1} + \gamma \va*{v_2}.
+\label{eq:v_on_plane_bary}
+\end{equation}
+
+\noindent For $\va*{v}$ to be located on or within $T$, the following requirements on the barycentric coordinates must be satisified:
+
+\begin{align}
+  &\text{\textbullet}\quad \alpha + \beta + \gamma = 1 \label{eq:sum_to_1_bary}\\
+  &\text{\textbullet}\quad \alpha, \beta, \gamma \geq 0 \label{eq:greater_than_0_bary}
+\end{align}
+
+With regard to the center of mass interpretation, Equation~\ref{eq:sum_to_1_bary} removes the computation of the denominator in Equation~\ref{eq:com}, while Equation~\ref{eq:greater_than_0_bary} eliminates the possibility of negative mass. For a rigorous proof of the requirements, see (find something).
+
+\subsubsection*{Möller-Trumbore Intersection Algorithm}
+\par The algorithm consists of 2 main steps:
+
+\begin{enumerate}
+  \item Check if ray intersects with $P$;
+  \item If so, check if intersection lies outside of $T$.
+\end{enumerate}
+
+\subparagraph{1.}
+\par To check if the ray described by Equation~\ref{eq:parametric_ray} intersects with $P$, one can define two vectors that lie along 2 edges of $T$:
+
+\begin{align}
+  \va*{e_1} &= \va*{v_1} - \va*{v_0} \label{eq:e_1_bary};\\
+  \va*{e_2} &= \va*{v_2} - \va*{v_0} \label{eq:e_2_bary}.
+\end{align}
+
+\noindent If $\va*{p} = \vu*{d} \cross \va*{e_2}$, then let $C = \va*{e_1} \cdot \va*{p}$. The line $\va*{r}$ does not intersect the plane $P$ iff $C = 0$, which happens iff $\vu*{d} \parallel P$. Thus, if $C = 0$, then $\va*{r}$ does not intersect $P$; otherwise, $\va*{r}$ will intersect $P$.
+
+\subparagraph{2.}
+Solving Equation~\ref{eq:sum_to_1_bary} for $\alpha$ and substituting into Equation~\ref{eq:v_on_plane_bary} results in
+
+\begin{equation}
+ \va*{v} = (1 - \beta - \gamma)\va*{v_0} + \beta\va*{v_1} + \gamma\va*{v_2}.
+ \label{eq:r_no_alpha_bary}
+\end{equation}
+
+\noindent After distributing and rewriting Equation~\ref{eq:r_no_alpha_bary} in terms of $\va*{e_1}$ and $\va*{e_2}$, 
+
+\begin{equation}
+  \va*{v} = \va*{v_0} + \beta \va*{e_1} + \gamma \va*{e_2}.
+  \label{eq:r_no_alpha_bary_simp}
+\end{equation}
+
+\noindent Setting $\va*{r} = \va*{v}$ to find the barycentric coordinates for the ray-triangle intersection and solving for $\va*{r} - \va*{v_0}$ yields
+
+\begin{equation}
+  \va*{r} - \va*{v_0} = -\vu*{d} + \beta \va*{e_1} + \gamma \va*{e_2}.
+\end{equation}
+
+\noindent One can then show that taking $(\va*{r} - \va*{v_0}) \vdot \va*{p}$ gives the following equation for $\beta$:
+
+\begin{equation}
+  \beta = \frac{(\va*{r} - \va*{v_0}) \vdot \va*{p}}{C},
+  \label{eq:beta_bary}
+\end{equation}
+
+\noindent and similarly, taking $\vu*{d} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]$ results in
+
+\begin{equation}
+  \gamma = \frac{\vu*{d} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]}{C}.
+  \label{eq:gamma_bary}
+\end{equation}
+
+\noindent To then determine $t$ at which the ray-triangle intersection occurs, one can take $\va*{e_2} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]$, yielding
+
+\begin{equation}
+  t = \frac{\va*{e_2} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]}{C}.
+  \label{eq:t_bary}
+\end{equation}
+
+\begin{listing}
+\begin{minted}[linenos]{cpp}
+  bool triangle::hit(const ray &r, float t_min, float t_max, hit_record &rec) const {
+    float kEpsilon = 1e-9;
+
+    vec3 e1 = v1 - v0;
+    vec3 e2 = v2 - v0;
+    vec3 pvec = cross(r.direction(), e2);
+    float C = dot(e1, pvec);
+
+    // ray is parallel to triangle
+    if (std::abs(C) < kEpsilon) return false; 
+
+    float inv_det = 1.0 / C;
+
+    vec3 tvec = r.origin() - v0;
+    float u = dot(tvec, pvec) * C;
+
+    // hit point is outside of triangle
+    if (u < 0.0 || u > 1.0) return false;
+
+    vec3 qvec = cross(tvec, e1);
+    float v = dot(r.direction(), qvec) * C;
+
+    // hit point is outside of triangle
+    if (v < 0.0 || u + v > 1.0) return false;
+
+    float t = dot(e2, qvec) * C;
+
+    // hit point is outside of ray
+    if (t < t_min || t > t_max) return false;
+
+    // record intersection point
+    rec.t.push_back(t); 
+    rec.p.push_back(r.at(t));
+
+    return true;
+}
+\end{minted}
+\caption{C++ implementation of the Möller-Trumbore ray-triangle intersection algorithm.}
+\label{list:tri_intersect_alg}
+\end{listing}
+  
+
+
+
+
+
 
