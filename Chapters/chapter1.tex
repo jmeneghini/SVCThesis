@@ -18,7 +18,7 @@
 % \section{Ray Tracing}
 \par Ray tracing is a computer graphics technique that involves tracing the path of rays as they pass through a virtual scene. Due to its ability to create highly-realistic images, it has been used extensively in animations, video games, scientific computing, and by designers who need a physically accurate design of a product. While not the only rendering technique or the fastest in computer graphics, its ability to consistently produce physically realistic renders has made it an indispensable tool in many industries. By accurately simulating the behavior of light, ray tracing can capture intricate details of how light interacts with objects, resulting in realistic shadows, reflections, refractions, and global illumination effects. This level of visual fidelity allows for the creation of visually stunning and immersive experiences that were previously challenging to achieve. As hardware capabilities continue to advance and real-time ray tracing becomes more accessible, its applications are expanding, and its impact on various fields is growing, pushing the boundaries of what is possible in computer graphics and visual simulation \cite{Peddie}.
 
-\subsection{The Brute Force Algorithm}
+\section{The Brute Force Algorithm}
 The rays in a scene are described mathematically as the parametric representation of a line. In three dimensions, the point at the end of the line $\va*{r}$ at parameter $t$ is given by the following equation:
 
 \begin{equation}
@@ -30,7 +30,7 @@ The rays in a scene are described mathematically as the parametric representatio
 
 \begin{figure}[H]
     \centering
-	\includegraphics[width=\textwidth]{RayDiagram.pdf}
+	\includegraphics[width=\textwidth]{chapter1/RayDiagram.pdf}
 	\caption{A diagram of a parametric ray.}
 	\label{fig:ray_diagram}
 \end{figure}
@@ -43,7 +43,7 @@ The rays in a scene are described mathematically as the parametric representatio
 
 \begin{figure}[H]
   \centering
-\includegraphics[width=\textwidth]{RayTracingSetup.pdf}
+\includegraphics[width=\textwidth]{chapter1/RayTracingSetup.pdf}
 \caption{A basic ray-tracing setup with a camera, ray, and viewport.}
 \label{fig:basic_ray_tracing_setup}
 \end{figure}
@@ -59,7 +59,7 @@ The rays in a scene are described mathematically as the parametric representatio
 
 \begin{figure}[H]
     \centering
-	\includegraphics[width = 0.8\textwidth]{LHCDiagram.pdf}
+	\includegraphics[width = 0.8\textwidth]{chapter1/LHCDiagram.pdf}
 	\caption{A diagram showing the geometric representations of $\protect\val{HO}$, $\protect\val{VE}$,
    $\protect\val{FL}$, and $\protect\val{LHC}$ with respect to the viewport.}
 	\label{fig:LHC_diagram}
@@ -86,15 +86,15 @@ v_j &= j/(\text{image height} - 1),
 
 \begin{figure}[H]
   \centering
-\includegraphics[width = 0.7\textwidth]{RayToViewportDiagram.pdf}
+\includegraphics[width = 0.7\textwidth]{chapter1/RayToViewportDiagram.pdf}
 \caption{A diagram showing the geometric representation of Equation~\ref{eq:ray_to_viewport}.}
 \label{fig:ray_to_viewport_diagram}
 \end{figure}
 
-\subsection{Ray-Triangle Intersections}
+\section{Ray-Triangle Intersections}
 \par With the end goal to be able ray-trace x-rays through an arbitrary user-defined mesh, we first need to choose which shape to compose said mesh with. Due to its efficient ray-intersection algorithm and its ease of parallelization on Graphics Processing Units (GPUs), these constituents, referred to as primitives, are typically chosen to be triangles. This following section will develop the ray-triangle intersection algorithm used by the x-ray tracer. In particular, the algorithm used was invented by Tomas Möller and Ben Trumbor, and is subsequentially refered to as the Möller-Trumbore ray-triangle intersection algorithm \cite{moller2005fast}. 
 
-\subsubsection*{Barycentric Coordinates}
+\subsection{Barycentric Coordinates}
 \par To motivate the unique coordinate system used by the algorithm, let us first review the concept of center of mass for 3 massive point particles. If 3 objects each have their own location in space $\va*{r_i}$, each with mass $m_i$, the center of mass $\va*{R}$ is given by:
 
 \begin{equation}
@@ -125,7 +125,7 @@ Notice a few properties of $\va*{R}$ that are intuitively clear:
 
 With regard to the center of mass interpretation, Equation~\ref{eq:sum_to_1_bary} removes the computation of the denominator in Equation~\ref{eq:com}, while Equation~\ref{eq:greater_than_0_bary} eliminates the possibility of negative mass. For a rigorous proof of the requirements, see (find something).
 
-\subsubsection*{Möller-Trumbore Intersection Algorithm}
+\subsection{Möller-Trumbore Intersection Algorithm} \label{sec:ray_tri_alg}
 \par The algorithm consists of 2 main steps:
 
 \begin{enumerate}
@@ -185,6 +185,8 @@ Solving Equation~\ref{eq:sum_to_1_bary} for $\alpha$ and substituting into Equat
   \label{eq:t_bary}
 \end{equation}
 
+\noindent Since Equation~\ref{eq:sum_to_1_bary} is assumed upon the construction of Equation~\ref{eq:r_no_alpha_bary}, one only needs to verify that Equation~\ref{eq:greater_than_0_bary} is satisfied to determine if there is a ray-triangle intersection. In addition, since certain scenarios might require a finite length ray described by $t\in[t_{\textrm{min}}, t_{\textrm{max}}]$, one would also check if the $t$ of the intersection falls within this range. The implementation of this algorithm used in the C++ x-ray tracing code is shown in Listing~\ref{lst:tri_intersect_alg}.
+
 \begin{listing}
 \begin{minted}[linenos]{cpp}
   bool triangle::hit(const ray &r, float t_min, float t_max, hit_record &rec) const {
@@ -198,23 +200,25 @@ Solving Equation~\ref{eq:sum_to_1_bary} for $\alpha$ and substituting into Equat
     // ray is parallel to triangle
     if (std::abs(C) < kEpsilon) return false; 
 
-    float inv_det = 1.0 / C;
+    float inv_C = 1.0 / C;
 
     vec3 tvec = r.origin() - v0;
-    float u = dot(tvec, pvec) * C;
+    float beta = dot(tvec, pvec) * inv_C;
 
     // hit point is outside of triangle
-    if (u < 0.0 || u > 1.0) return false;
+    // if beta > 1.0 -> alpha and/or beta < 0
+    if (beta < 0.0 || beta > 1.0) return false;
 
     vec3 qvec = cross(tvec, e1);
-    float v = dot(r.direction(), qvec) * C;
+    float gamma = dot(r.direction(), qvec) * inv_C;
 
     // hit point is outside of triangle
-    if (v < 0.0 || u + v > 1.0) return false;
+    // if beta + gamma > 1.0 -> alpha < 0
+    if (gamma < 0.0 || beta + gamma > 1.0) return false;
 
-    float t = dot(e2, qvec) * C;
+    float t = dot(e2, qvec) * inv_C;
 
-    // hit point is outside of ray
+    // hit point is outside of ray's range
     if (t < t_min || t > t_max) return false;
 
     // record intersection point
@@ -225,8 +229,89 @@ Solving Equation~\ref{eq:sum_to_1_bary} for $\alpha$ and substituting into Equat
 }
 \end{minted}
 \caption{C++ implementation of the Möller-Trumbore ray-triangle intersection algorithm.}
-\label{list:tri_intersect_alg}
+\label{lst:tri_intersect_alg}
 \end{listing}
+
+\section{Meshes and Their Intersections}
+From these triangle primitives, one can easily construct a mesh. In particular, one can create an STL file, which is a list of triangles with each element containing the vertices and unit normal vector of a particular triangle. These files, which must describe closed meshes, can then be specified in the x-ray tracing code, along with their position in the scene and their composing material $M$. An example STL mesh is shown in Figure~\ref{fig:coin_mesh_render}.
+
+\begin{figure}[htb!]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+      \includegraphics[width=\textwidth]{chapter1/coin_top.png}
+      \caption{Top}
+  \end{subfigure}
+  \hfill % optional spacing
+  \begin{subfigure}[b]{0.45\textwidth}
+      \includegraphics[width=\textwidth]{chapter1/coin_bottom.png}
+      \caption{Bottom}
+  \end{subfigure}
+  \caption{The rendered (a) top and (b) bottom of an STL mesh representing an ancient Chinese coin. This particular mesh is composed of 33,558 triangles.}
+  \label{fig:coin_mesh_render}
+\end{figure}
+
+The key quantity of interest for an x-ray traversing through one of these meshes $S$ is the total length $l$ of the ray that exists within the mesh. To calculate $l$, the x-ray tracing code
+
+\begin{enumerate}
+  \item Loops through each triangle $T_i$ in $S$ and checks for an intersection using the Möller-Trumbore algorithm described in Section~\ref{sec:ray_tri_alg}. If the ray does not intersect with any $T_i$, then the ray is said to not intersect $S$ and $l=0$.
+  \item If the ray intersects $N$ times with $S$, then the parameters $t_i$ of the intersected $T_i$'s are sorted in ascending order. 
+  \item Since a ray can only enter then exit a mesh, 
+  \begin{equation}
+    l = \sum_{i=0}^{\frac{N-1}{2}} (t_{2i+1} - t_{2i}).
+    \label{eq:l_for_M}
+  \end{equation}
+\end{enumerate}
+
+\section{Intensity Drop}
+With $l$ obtained from Equation~\ref{eq:l_for_M}, one can then calculate the effect on the ray's intensity $I$ after traversing $S$ using the exponential attenuation law developed in the typical undergraduate modern physics course \cite{serway}:
+
+\begin{equation}
+  I = I_0 e^{-\mu_m(M, E) \rho l},
+  \label{eq:exp_atten}
+\end{equation}
+
+\noindent where $I_0$ is initial intensity of the ray before entering $S$, $\mu_m(M, E)$ is the mass-attenuation coefficient of the material $M$ composing $S$ at energy $E$, and $\rho$ is the mass density of $M$. 
+
+\par Furthermore, if one considers a single photon travelling a distance $l$ through $S$, the ratio $\frac{I}{I_0}$ would represent the probability of completing the traversal. Thus, one can use the multiplication rule of probabilities to generalize Equation~\ref{eq:exp_atten} to find the relative intensity $\frac{I_k}{I_0}$ of a ray after traversing a $k$ number of different $S$'s. In particular,
+
+\begin{equation}
+  \frac{I_k}{I_0} = \prod_i^{k} \frac{I_i}{I_0} =  \exp\left[ -\sum_i^k \mu_m(M_i, E) \rho_i l_i \right],
+  \label{eq:exp_atten_k}
+\end{equation}
+
+\noindent where $M_i$, $\rho_i$, and $l_i$ is the material, mass density, and path length, respectively, of the $i$-th traversed $S$.
+
+\par Recall that these rays are being sent out from a source (camera) to a grid of points of a specified resolution (viewport). In the case of x-ray imaging, the camera would represent the x-ray tube, while the viewport would be the x-ray detector. So, these meshes would be placed between the tube and detector, and rays would lose intensity in their path from the tube to the detector, revealing details of the meshes' geometries and compositions. In order to visualize these variations in intensities, the x-ray tracing code directly converts the relative intensity values into pixels of an 8-bit grayscale image. These relative intensities obtained from Equation~\ref{eq:exp_atten_k} are converted to integers in the range of 0 to 255, where $\frac{I_k}{I_0}$'s of 1 would become 255 (white pixel), and values of 0 would stay 0 (black pixel). It's important to note the versatility in image interpretation: the inversion of image color, a practice variable across different X-ray machines, does not compromise the information contained. This manipulation, sometimes employed by radiologists for enhanced detail visibility, alters none of the underlying data. Rather, it serves to accentuate certain details, making them more discernible visually. Moreover, advanced imaging software often allows radiologists to adjust the contrast and brightness of x-ray images post-processing, further aiding in the identification and analysis of specific features or anomalies within the image.
+
+
+\par For a flowchart summarizing the x-ray tracing algorithm introduced in this chapter, see Figure~\ref{fig:xray_trace_flowchart}.
+
+\begin{figure}[htb!]
+  \centering
+  \includegraphics[width=\textwidth]{chapter1/X-RayTracingAlgorithmFlowChart.pdf}
+  \caption{A flowchart summarizing the x-ray tracing algorithm introduced in Chapter~\ref{cha:xray_tracing}.}
+  \label{fig:xray_trace_flowchart}
+\end{figure}
+
+\section{Mass-Attenuation Coefficients and Material Definition Sources}
+In practice, one needs a source of the $\mu_m$'s used in Equation~\ref{eq:exp_atten_k}. The source of these values used by the x-ray tracing code is NIST's tables of x-ray mass-attenuation coefficients obtained by Hubbell \cite{hubbell1982photon}. These tables are given for each element $Z$, from which we can approximate $\mu_m$ of a material $M$ by taking the weighted average of the mass fractions of its constituent elements and their respective $\mu_m$'s. In particular, the mass-attenuation coefficient of a particular $M$ at $E$, composed of elements ${Z_i}$ with mass fractions ${w_i}$, is given by
+
+\begin{equation}
+  \mu_m(M, E) = \sum_i w_i \mu_m(Z_i, E),
+\end{equation}
+
+\noindent with {$Z_i$} and {$w_i$} of common materials provided by NIST \cite{hubbell1982photon}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\textwidth]{chapter1/coin.png}
+  \caption{A rendered x-ray image (grayscale inverted) of the ancient Chinese coin shown in Figure~\ref{fig:coin_mesh_render}, with $M$ being cortical bone and $E = \qty{30}{keV}$.}
+\end{figure}
+
+
+
+
+
   
 
 
