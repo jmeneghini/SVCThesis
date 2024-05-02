@@ -213,11 +213,17 @@ and to retrieve information about the performed simulation, the following is req
         \includegraphics[width=\textwidth]{chapter3/case1_perspective_view.png}
         \caption{Perspective View}
     \end{subfigure}
-    \caption{The (a) top and (b) bottom view of the geometry described by Case 2.}
+    \caption{A (a) top and (b) perspective view of the geometry described by Case 1.}
     \label{fig:case1}
 \end{figure}
 
 \par For Case 2, a full-field and pencil beam x-ray source were directed towards a cuboid tissue phantom at $0^\circ$ and $15^\circ$ from an axis drawn perpendicularly from the center of the cuboid. Directly behind and inside the phantom, a grid of square ROIs and cube volumes of interests (VOI) were placed, respectively. The simulation was performed for the TG-195-provided polyenergetic spectrum of 120 kVp and its mean energy of 56.4 keV. For the $0^\circ$, full-field ROI measurements (not shown), a $<3.9$\% mean percent error (MPE) is seen for MIDSX's results to each ROI simulation. Furthermore, for the $0^\circ$ pencil-beam ROI measurements shown in Figure~\ref{fig:ROIPGraph}, a $<2.1$\% MPE is observed for each ROI simulation except for the case of a single incoherent scatter. In this particular case, MIDSX's results for ROI 4 and 5 are significantly lower, with the MPE reaching 13.1\% for ROI 5. The full-field VOI energy deposition measurements depicted in Figure~\ref{fig:BDGraph} show a minimal MPE of less than 0.1\% for the $0^\circ$ source. Conversely, for the MIDSX results at $15^\circ$, the MPE reaches an unexpectedly larger value of approximately 0.6\%.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{chapter3/case2_perspective_view.png}
+    \caption{A perspective view of the geometry described by Case 2.}
+\end{figure}
 
 \par For Case 5, a fan beam was collimated to the center of a voxelized human torso phantom provided by TG-195. To replicate a CT image, the simulation was repeated for several angles along a circle surrounding the phantom. The simulation was performed with Case 2's 120 kVp energy spectrum, and energy deposition was measured in the different materials/organs composing the phantom. Almost all of MIDSX's results for the $0^\circ$ source presented in Figure~\ref{fig:CTGraph} are systematically lower than the mean of the reference code systems, with MPE's ranging from 1.1\% to 6.3\%. This pattern is disrupted by the thyroid, which is larger than the mean by 2.9\%. 
 
