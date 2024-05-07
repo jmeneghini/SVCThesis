@@ -1,4 +1,9 @@
-\chapter{Monte Carlo Approach}
+\chapter{The Monte Carlo Approach}
+\par With the results of the previous chapter raising many questions, further research was conducted into the interactions of photons with matter. Resources such as the theory description of the photon transport code system PENELOPE \cite{penelope-2018_2019} and Vassiliev's Monte Carlo methods textbook \cite{vassiliev_monte_2017} reference the same exponential attenuation equation (Equation~\ref{eq:exp_atten}) that the x-ray tracer is based upon; however, they introduce a slight caveat. In particular, they specify that this equation does not describe how far a photon will travel before being absorbed, but rather it describes how far it will travel before interacting. Now, for thin materials such as the monoatomic attenuators used in the effective energy validation, this distinction does not have too great of an effect, since the small thickness results in a low number of interactions being more probable. But, for thicker materials such as the water and plastic scintillator, these photons have to travel a much larger distance, resulting in many more interactions, and since these interactions include scattering, these photons will still have a chance to make it to the x-ray detector. This is in contrast to our previous employed model, which would have considered the photon as terminated upon its first interaction in the medium, drastically decreasing the predicted relative intensity as measured by the detector. By Equation~\ref{eq:mu}, this would cause a decrease in $\mu_m$, and as a result of the negative correlation between $\mu_m$ and $E_{\textrm{eff}}$ demonstrated in Figure~\ref{figure:NISTSplineFit}, this explains the increase in $E_{\textrm{eff}}$ observed in Figure~\ref{figure::results}. To account for this more complex model and to more accurately predict reality, we can still use ray-tracing to move these photons to interaction sites. However, selecting these path lengths and simulating the interactions necessitates the random sampling of probability distributions that characterize these processes. This type of simulation, which utilizes random numbers to model stochastic behaviors, is known as Monte Carlo simulation. This method is crucial for obtaining statistically significant predictions in scenarios where analytical solutions are unfeasible or unknown.
+
+\par In the MC technique, the 3D space encompassing the phantom and the radiation source is represented as a computational domain. Within this domain, individual photon interactions are stochastically simulated, accounting for each interaction event as photons navigate the phantom. Such stochastic simulation offers unparalleled precision, capturing even the most subtle nuances of radiation behavior in biological media. Additionally, the MC method can simulate various medium types, densities, and configurations, making it incredibly versatile and adaptable to various imaging tests. Furthermore, advancements in computational power and algorithms have expedited MC simulation, rendering it more accessible and feasible for routine clinical applications \cite{fernandez_bosman_validation_2021}.
+
+\par In this chapter, the newly developed, open-source MC photon transport code system MIDSX is presented and validated. While many existing MC transport code systems perform reliably in dosimetry applications \cite{fernandez_bosman_validation_2021, geant4valid2004}, many of these systems are tailored for general particle transport. The developmental focus of MIDSX on x-ray transport reduces the complexity of implementation and allows users to easily design and run simulations specifically relating to x-ray transport in the medical imaging energy range. The subsequent sections will delve into the theory of MIDSX, compare results from MIDSX to accepted benchmarks from established simulation systems, and outline future work.
 
 \section{Transport Theory} \label{sec:theory}
 \par To represent the computational domain discretely, space is broken up into a grid of voxels (volume pixel), with each voxel being assigned a particular material depending on the geometries and compounds/elements in the domain. Within our discrete space, given a photon position $\va*{r}$, the corresponding voxel in which the photon resides can be calculated. Therefore, all possible $\va*{r}$'s can be assigned a particular material $M$ in the domain.
@@ -41,7 +46,7 @@ where $E$ is the energy of the photon undergoing the step. When the photon lands
 \end{equation}
 \par If a real interaction occurs in material $M$, then the probability of interaction $i$ occurring is 
 \begin{equation}
-P_i = \frac{\sigma_i(E, M)}{\sigma (E, M)}
+P_i = \frac{\sigma_i(E, M)}{\sigma (E, M)},
 \end{equation}
 where $\sigma_i$ is the cross-section of interaction $i$. If there are $N$ possible interactions for a particular $E$ and $M$, then $\sigma (E, M)$ is simply the sum of each interaction's cross-section.
 
@@ -58,7 +63,7 @@ where $\sigma_i$ is the cross-section of interaction $i$. If there are $N$ possi
 \begin{equation}
     \frac{d\sigma_T}{d\Omega} = r_e^2 \frac{1 + \cos^2(\theta)}{2},
 \end{equation}
-where $r_e^2$ is the classical electron radius.
+where $r_e^2$ is the classical electron radius and $\theta$ is the scattering angle.
 \par In an atom, photons scatter off bound electrons rather than the free electrons described by Thomson scattering, resulting in what is known as coherent (Rayleigh) scattering. The DCS per unit solid angle $\Omega$ of the interaction, ignoring absorption edge effects, is given by
 
 \begin{equation}
@@ -66,7 +71,7 @@ where $r_e^2$ is the classical electron radius.
     \label{eq:DCS_omega_rayleigh}
 \end{equation}
 
-where $x$ is the momentum transfer between the photon and atom, $Z$ is the atomic number of the atom, and $F(x, Z)$ is the atomic form factor. $x$ is related to the scattering angle $\theta$ by
+where $x$ is the momentum transfer between the photon and atom, $Z$ is the atomic number of the atom, and $F(x, Z)$ is the atomic form factor. $x$ is related to $\theta$ by
 
 \begin{equation}
     x = ak\sqrt{1 - \cos\theta},
@@ -98,8 +103,7 @@ where
     p(\mu) = \frac{\pi r_e^2}{\sigma_{Co}} (1 + \mu^2) F(x, Z)^2.
 \end{equation}
 
-\par To then sample $\mu$ for a particular scattering event, the inversion method is used. In particular, a look up table for the CDF of $P(\mu)$ is generated for each material in the domain for a grid of $\mu$ values. The details of this algorithm are discussed in Appendix ...
-
+\par To then sample $\mu$ for a particular scattering event, the inversion method is used. In particular, a look up table for the CDF of $P(\mu)$ is generated for each material in the domain for a grid of $\mu$ values, allowing for easy inversion of the CDF. The details of this algorithm can be found in PENELOPE's description of RITA \cite{penelope-2018_2019}.
 % \begin{large}
 %     \bf{3. Incoherent Scattering}
 % \end{large}
@@ -108,13 +112,13 @@ where
 \par Incoherent (Compton) scattering is defined as an incoming photon of energy $E$ interacting with an atom's electron, resulting in a scattered photon of energy $E'$ and a released electron with energy $E_e = E - E' - U_i$, where $U_i$ is the binding energy of the interacting subshell. While coherent scattering effectively interacts with the entire electron cloud, incoherent scattering interacts with an individual electron. The DCS per unit solid angle $\Omega$ of the interaction was derived by Klein and Nishina in 1929, making it one of the first results of quantum electrodynamics. The Klein-Nishina formula is given by
 
 \begin{equation}
-    \frac{d\sigma_{KN}}{d\Omega} = \frac{r_e^2}{2} \left(\frac{E'}{E}\right)^2 \left(\frac{E'}{E} + \frac{E}{E'} - \sin^2 \theta \right),
+    \frac{d\sigma_{KN}}{d\Omega} = \frac{r_e^2}{2} \left(\frac{E'}{E}\right)^2 \left(\frac{E'}{E} + \frac{E}{E'} - \sin^2 \theta \right).
     \label{eq:DCS_omega_KN}
 \end{equation}
 
 \par Note that when $E' = E$, the Equation~\ref{eq:DCS_omega_KN} simplifies to Equation~\ref{eq:DCS_omega_rayleigh}, showing that incoherent scattering is a generalization of coherent scattering for inelastic interactions.
 
-\par Applying conservation of energy and momentum to a free electron at rest, the following equation can be derived relating the scattered photon energy $E'$ to the scattering angle $\theta$ and the incident photon energy $E$:
+\par Applying conservation of energy and momentum to a free electron at rest, the following equation can be derived relating $E'$ to $\theta$ and $E$:
 
 \begin{equation}
     E' = \frac{E}{1 + k(1 - \cos \theta)}.
@@ -126,7 +130,7 @@ where
     \frac{d\sigma_{In}}{d\Omega} = \frac{d\sigma_{KN}}{d\Omega} S(x, Z).
 \end{equation}
 
-\par Instead of directly sampling the PDF of the DCS, $\mu$ is first sampled from Equation~\ref{eq:DCS_omega_KN} using the acceptance-rejection method developed by Kahn, then $S(x, Z)$ is sampled with the standard acceptance-rejection method. The details of this algorithm are discussed in Appendix ...
+\par Instead of directly sampling the PDF of the DCS, $\mu$ is first sampled from Equation~\ref{eq:DCS_omega_KN} using the acceptance-rejection method developed by Kahn, then $S(x, Z)$ is sampled with the standard acceptance-rejection method. The details of this algorithm can be found in OpenMC's incoherent scattering theory description \cite{lund2018implementation}.
 
 \section{Methods}
 
@@ -175,11 +179,12 @@ and to retrieve information about the performed simulation, the following is req
     \item Scattering Function
 \end{enumerate}
 
-\par In MIDSX, all the above data is initialized upon created creation of the \mintinline{c++}{InteractionData} object, which requires a vector of strings of materials names. For convience, the \mintinline{c++}{ComputationalDomain} implements a helper function to generate \mintinline{c++}{InteractionData} for the materials in the domain. The material names correspond to entries in the SQLite database, which contains a table of material compositions and mass densities which were obtained from NIST's mass attenuation coefficient database \cite{hubbell_x-ray_2004}. The \mintinline{c++}{InteractionData} object contains a map of \mintinline{c++}{Material} objects with their names, along with additional computed data, such as the maximum cross-section used in delta-tracking. The \mintinline{c++}{Material} objects construct the above data for the specified material by performing the additivity approximation described by the generalization of Equation~\ref{eq:mu_weighted} for any data of interest, rather than specifically $\mu_m$. The data is then separated into two further objects: \mintinline{c++}{MaterialData} and \mintinline{c++}{MaterialProperties}. \mintinline{c++}{MaterialData} contains the microscopic cross-sections, form factors, and scattering functions, while \mintinline{c++}{MaterialProperties} contains the mass density, number density, and mass.
+\par In MIDSX, all the above data is initialized upon created creation of the \mintinline{c++}{InteractionData} object, which requires a vector of strings of materials names. For convience, \newline
+\mintinline{c++}{ComputationalDomain} implements a helper function to generate \mintinline{c++}{InteractionData} for the materials in the domain. The material names correspond to entries in the SQLite database, which contains a table of material compositions and mass densities which were obtained from NIST's mass attenuation coefficient database \cite{hubbell_x-ray_2004}. The \mintinline{c++}{InteractionData} object contains a map of \mintinline{c++}{Material} objects with their names, along with additional computed data, such as the maximum cross-section used in delta-tracking. The \mintinline{c++}{Material} objects construct the above data for the specified material by performing the additivity approximation described by the generalization of Equation~\ref{eq:mu_weighted} for any data of interest, rather than specifically $\mu_m$. The data is then separated into two further objects: \mintinline{c++}{MaterialData} and \mintinline{c++}{MaterialProperties}. \mintinline{c++}{MaterialData} contains the microscopic cross-sections, form factors, and scattering functions, while \mintinline{c++}{MaterialProperties} contains the mass density, number density, and mass.
 \par In addition to retrieving and storing the above data, the \mintinline{c++}{MaterialData} object constructs interpolators for all its data. The interpolators for each type of data vary depending on its shape. For example, the photoelectric and total cross-sections are interpolated with a log-log linear interpolator, while the incoherent and coherent cross-sections are interpolated with a log-log cubic spline interpolator.
 
 \subsection{Source}
-\par To generate the initial position, direction, and energy of a photon, a \mintinline{c++}{PhotonSource} object is initialized with a \mintinline{c++}{SourceGeometry}, \mintinline{c++}{Directionality}, and an \mintinline{c++}{EnergySpectrum} object. The three initializing objects are virtual classes, allowing the user to specify the attributes of the source. The inheritance structure is shown in Fig (). 
+\par To generate the initial position, direction, and energy of a photon, a \mintinline{c++}{PhotonSource} object is initialized with a \mintinline{c++}{SourceGeometry}, \mintinline{c++}{Directionality}, and an \mintinline{c++}{EnergySpectrum} object. The three initializing objects are virtual classes, allowing the user to specify the attributes of the source. The inheritance structure is shown in Fig (CURRENTLY IS IN THE OVEN). 
 
 
 \subsection{Tallies}
@@ -188,6 +193,7 @@ and to retrieve information about the performed simulation, the following is req
 \par At the end of simulation, one might want to calculate additional derived quantities from the tallied quantities from the simulation. With this mind, MIDSX contains a \mintinline{c++}{DerivedQuantity} object that can calculate planar fluence and air kerma, which were implemented for use in half value layer simulations.
 \vspace{1cm}
 \par Using the described theory and methodology, the \mintinline{c++}{RunSimulation} function transports $N$ photons by calling \mintinline{c++}{PhysicsEngine} $N$ times. This parallel execution is facilitated through the use of the OpenMP API \cite{dagum1998openmp}, which distributes the computational load across multiple processors to increase performance. The steps taken by \mintinline{c++}{PhysicsEngine} to transport a single photon is summarized in Figure~\ref{fig:PhysicsEngineFlowChart}.
+
 
 
 \begin{figure}[H]
@@ -217,15 +223,25 @@ and to retrieve information about the performed simulation, the following is req
     \label{fig:case1}
 \end{figure}
 
-\par For Case 2, a full-field and pencil beam x-ray source were directed towards a cuboid tissue phantom at $0^\circ$ and $15^\circ$ from an axis drawn perpendicularly from the center of the cuboid. Directly behind and inside the phantom, a grid of square ROIs and cube volumes of interests (VOI) were placed, respectively. The simulation was performed for the TG-195-provided polyenergetic spectrum of 120 kVp and its mean energy of 56.4 keV. For the $0^\circ$, full-field ROI measurements shown in Figure~\ref{fig:ROIFFGraph}, a $<3.9$\% mean percent error (MPE) is seen for MIDSX's results to each ROI simulation. Furthermore, for the $0^\circ$ pencil-beam ROI measurements shown in Figure~\ref{fig:ROIPGraph}, a $<2.1$\% MPE is observed for each ROI simulation except for the case of a single incoherent scatter. In this particular case, MIDSX's results for ROI 4 and 5 are significantly lower, with the MPE reaching 13.1\% for ROI 5. The full-field VOI energy deposition measurements depicted in Figure~\ref{fig:BDGraph} show a minimal MPE of less than 0.1\% for the $0^\circ$ source. Conversely, for the MIDSX results at $15^\circ$, the MPE reaches an unexpectedly larger value of approximately 0.6\%.
+\par For Case 2, depicted in Figure~\ref{fig:case2}, a full-field and pencil beam x-ray source were
+\linebreak directed towards a cuboid tissue phantom at $0^\circ$ and $15^\circ$ from an axis drawn perpendicularly from the center of the cuboid. Directly behind and inside the phantom, a grid of square ROIs and cube volumes of interests (VOI) were placed, respectively. The simulation was performed for the TG-195-provided polyenergetic spectrum of 120 kVp and its mean energy of 56.4 keV. For the $0^\circ$, full-field ROI measurements shown in Figure~\ref{fig:ROIFFGraph}, a $<3.9$\% mean percent error (MPE) is seen for MIDSX's results to each ROI simulation. Furthermore, for the $0^\circ$ pencil-beam ROI measurements shown in Figure~\ref{fig:ROIPGraph}, a $<2.1$\% MPE is observed for each ROI simulation except for the case of a single incoherent scatter. In this particular case, MIDSX's results for ROI 4 and 5 are significantly lower, with the MPE reaching 13.1\% for ROI 5. The full-field tissue energy deposition measurements depicted in Figure~\ref{fig:BDGraph} show a minimal MPE of less than 0.1\% for the $0^\circ$ source. Conversely, for the MIDSX results at $15^\circ$, the MPE reaches an unexpectedly larger value of approximately 0.6\%. Finally, for the $\ang{0}$ full-field VOI measurements presented in Figure~\ref{fig:VOIFFGraph}, MPE's range from  to (NEED TO GET DATA), demonstrating excellent agreement.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{chapter3/case2_perspective_view.png}
-    \caption{A perspective view of the full-field geometry described by Case 2. In this setup, a source is collimated such that all photons are incident on a square with side lengths of $\qty{39}{cm}$, located $\qty{180}{cm}$ away. Placed $\qty{5}{cm}$ in front of the square is a cuboid tissue phantom (body) with dimensions of $\qty{39}{cm} \times \qty{39}{cm} \times \qty{20}{cm}$. Within the body and the square lie numbered VOIs and ROIs, respectively, which measure deposited and incident energy. For Case 2, simulations were performed separately for a source placed \ang{0} and \ang{15} with respect to an axis drawn perpendicularly from the center of the body. For the additional $\ang{0}$ pencil-beam measurements that were made, the setup was identical, except all the ROIs were brought closer to ROI 5 to study the scattering models used by MIDSX.} 
+    \caption{A perspective view of the \ang{0} full-field geometry described by Case 2. In this setup, a point source is collimated such that all photons are incident on a square with side lengths of $\qty{39}{cm}$, located $\qty{180}{cm}$ away. Placed $\qty{5}{cm}$ in front of the square is a cuboid tissue phantom (body) with dimensions of $\qty{39}{cm} \times \qty{39}{cm} \times \qty{20}{cm}$. Within the body and the square lie numbered VOIs and ROIs, respectively, which measure deposited and incident energy. For Case 2, simulations were performed separately for a source placed \ang{0} and \ang{15} with respect to an axis drawn perpendicularly from the center of the body. For the additional $\ang{0}$ pencil-beam measurements that were made, the setup was identical, except all the ROIs were brought closer to ROI 5 to study the scattering models used by MIDSX.} 
+    \label{fig:case2}
 \end{figure}
 
-\par For Case 5, a fan beam was collimated to the center of a voxelized human torso phantom provided by TG-195. To replicate a CT image, the simulation was repeated for several angles along a circle surrounding the phantom. The simulation was performed with Case 2's 120 kVp energy spectrum, and energy deposition was measured in the different materials/organs composing the phantom. Almost all of MIDSX's results for the $0^\circ$ source presented in Figure~\ref{fig:CTGraph} are systematically lower than the mean of the reference code systems, with MPE's ranging from 1.1\% to 6.3\%. This pattern is disrupted by the thyroid, which is larger than the mean by 2.9\%. 
+\par For Case 5, depicted in Figure~\ref{fig:case3}, a fan beam was collimated to the center of a\linebreak
+voxelized human torso phantom provided by TG-195. To replicate a CT image, the simulation was repeated for several angles along a circle surrounding the phantom. The simulation was performed with Case 2's 120 kVp energy spectrum, and energy deposition was measured in the different materials/organs composing the phantom. Almost all of MIDSX's results for the $0^\circ$ source presented in Figure~\ref{fig:CTGraph} are systematically lower than the mean of the reference code systems, with MPE's ranging from 1.1\% to 6.3\%. This pattern is disrupted by the thyroid, which is larger than the mean by 2.9\%. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{chapter3/case3_perspective_view.png}
+    \caption{A perspective view of the \ang{0} geometry described by Case 5. In this setup, a point source fan beam was collimated to the center of a voxelized human torso phantom provided by TG-195. Measurements were made for several points along a constant radius of \qty{60}{cm} from the center of the phantom, effectively simulating a CT image.}
+    \label{fig:case3}
+\end{figure}
 
 
 \begin{figure}[H]
@@ -234,14 +250,6 @@ and to retrieve information about the performed simulation, the following is req
 	\caption{Results for the (a) HVL and (b) QVL simulations as described by Case 1. The ratios of the primary HVL and QVL air kermas to the primary background air kermas is represented by $R_1$ and $R_2$, respectively. The simulation was performed for the monoenergetic energies 30 keV and 100 keV, along with the polyenergetic spectrums of 30 kVp and 100 kVp provided by TG-195. A dashed-line is placed at $R_1 = 0.5$ and $R_2 = 0.25$ for comparison.}
 	\label{fig:HVLGraph}
 \end{figure}
-
-\begin{figure}[H]
-    \centering
-	\includegraphics[width=1.0\textwidth]{chapter3/radiography_body_dep_paper_ready.pdf}
-	\caption{The energy deposited per initial photon (p.i.p.) (eV/photon) in the simulated tissue for the full-field simulation as described by Case 2. The simulation was performed at 56.4 keV and 120 kVp at both (a) $0^\circ$ and (b) $15^\circ$, with the 120 kVp spectrum provided by TG-195.}
- 	\label{fig:BDGraph}
-\end{figure}
-
 
 \begin{figure}[H]
     \centering
@@ -259,17 +267,24 @@ and to retrieve information about the performed simulation, the following is req
 
 \begin{figure}[H]
     \centering
+	\includegraphics[width=1.0\textwidth]{chapter3/radiography_body_dep_paper_ready.pdf}
+	\caption{The energy deposited per initial photon (p.i.p.) (eV/photon) in the simulated tissue for the full-field simulation as described by Case 2. The simulation was performed at 56.4 keV and 120 kVp at both (a) $0^\circ$ and (b) $15^\circ$, with the 120 kVp spectrum provided by TG-195.}
+ 	\label{fig:BDGraph}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
 	\includegraphics[width=1.0\textwidth]{chapter3/VOI_paper_ready.pdf}
 	\caption{The energy deposited per initial photon (eV/photon) in the volumes of interests (VOIs) for the full field simulation as described by Case 2. The simulation was performed at (a) $0^\circ$/56.4 keV, (b) $0^\circ$/120 kVp, (c) $15^\circ$/56.4 keV, and (d) $15^\circ$/120 kVp.}
 	\label{fig:VOIFFGraph}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-	\includegraphics[width=1.0\textwidth]{chapter3/CT_564_180.pdf}
-	\caption{The energy deposited per initial photon (eV/photon) in the material IDs for the $180^\circ$, 56.4 keV simulation as described by Case 5.}
-	\label{fig:CTGraph}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+% 	\includegraphics[width=1.0\textwidth]{chapter3/CT_564_180.pdf}
+% 	\caption{The energy deposited per initial photon (eV/photon) in the material IDs for the $180^\circ$, 56.4 keV simulation as described by Case 5.}
+% 	\label{fig:CTGraph}
+% \end{figure}
 
 \begin{figure}[H]
     \centering
@@ -286,6 +301,8 @@ and to retrieve information about the performed simulation, the following is req
 \par For Case 5, almost all organ energy deposition results were lower than the reference code results, with the MPE reaching 6.3\%, except for the thyroid, with an MPE of 2.9\% larger. One common error reported by TG-195 that could result in the observed discrepancies is the incorrect orientation of the voxelized phantom in the computational domain. The orientation was verified by taking the root mean square percent error (RMSPE) of the MIDSX data with respect to the results of each simulated angle reported by TG-195. As expected, the RMSPE with respect to $0^\circ$ was the minimum, verifying that the phantom's orientation during the CT simulation was correct.
 
 \par Despite verifying the orientation, the deviation of MIDSX's energy deposition results for both Cases 2 and 5 suggest that there may be other underlying errors in the MIDSX system that need further investigation. Potential factors could include the software's handling of scattering events, cross-section data initialization, and interpolation. Future work will study these aspects to pinpoint and rectify the source of the systematic errors observed in the MIDSX results.
+
+\par To try MIDSX yourself or to view the source code, see \cite{MIDSX2023}.
 % \par Overall, MIDSX shows relative agreement with the PENELOPE, EGSnrc, Geant4, and MCNP results provided by TG-195 for the three examined cases. For the HVL layer simulation described by Case 1, statistical agreement is seen with all code systems except for PENELOPE for the HVL and QVL 100 keV simulation. In addition, for the 30 keV simulation, statistical agreement is seen with PENELOPE, Geant4, and MCNP for HVL, along with PENELOPE and MCNP for QVL. Note that while no statistical agreement is observed for the other energies/thicknesses, all MIDSX results are within 0.32\% of the mean of the reference code systems.
 
 % \par For Case 2, agreement is rather varied. For the full-field ROI measurements not shown in this paper due page constraints, very little statistical agreement is seen between the code systems; however, a $<3$\% mean percent error (MPE) is seen for MIDSX's results to each ROI simulation. Furthermore, for the pencil-beam ROI measurements shown in Fig \ref{fig:ROIPGraph}, statistical agreement is not readily observed, but a $<2.1$\% MPE is observed for each ROI simulation expect for the case of a single incoherent scatter. In this particular case, MIDSX's results for ROI 4 and 5 are significantly lower, with the MPE reaching 10\% for ROI 5. This discrepancy is likely a result of an error in the rejection sampling algorithm employed by MIDSX. While this algorithm shows agreement for the full-field ROI 5, the geometry of the ROI, combined with the pencil beam, results in only narrow angle scatters hitting the ROI. Since the scattering angle distribution of incoherent scattering at the medical imaging energy range contains a vertical asymptote approaching 0 at $\theta = 0^\circ$, there is likely some form of numerical instability presenting itself in the algorithm that needs to be analyzed.
