@@ -11,11 +11,15 @@
 \chapter{X-ray Tracing}
 \label{cha:xray_tracing}
 
-% \par Computed Tomography (CT) imaging is a critical diagnostic tool used by medical professionals to diagnose various illnesses and injuries. While the use of CT imaging is essential to provide immediate, life-saving results, ionizing radiation can damage cells and increase the risk of cancer. While the risk is small, it is cumulative, so physicians must track a patient's radiation exposure over time \cite{lauer2009elements}. Typically, exposure is measured using absorbed dose in the body and air kerma at the skin layer, which both have units of grays (joule/kg), making it directly related to the energy deposited by photons and their secondary particles. Often, these values are estimated based on the properties of the x-ray source and the specific procedure being performed. However, the most accurate estimation techniques use Monte Carlo (MC) methods to simulate the propagation of photons through a computational phantom \cite{essmedphys2012}. 
-% \par In the MC technique, the 3D space encompassing the phantom and the radiation source is represented as a computational domain. Within this domain, individual photon interactions are stochastically simulated, accounting for each interaction event as photons navigate the phantom. Such stochastic simulation offers unparalleled precision, capturing even the most subtle nuances of radiation behavior in biological media. Additionally, the MC method can simulate various medium types, densities, and configurations, making it incredibly versatile and adaptable to various imaging tests. Furthermore, advancements in computational power and algorithms have expedited MC simulation, rendering it more accessible and feasible for routine clinical applications \cite{fernandez_bosman_validation_2021}.
-% \par In this paper, the newly developed, open-source MC photon transport code system MIDSX is presented and validated. While many existing MC transport code systems perform reliably in dosimetry applications \cite{fernandez_bosman_validation_2021, geant4valid2004}, many of these systems are tailored for general particle transport. The developmental focus of MIDSX on x-ray transport reduces the complexity of implementation and allows users to easily design and run simulations specifically relating to x-ray transport in the medical imaging energy range. The subsequent sections will delve into the theory of MIDSX, compare results from MIDSX to accepted benchmarks from established simulation systems, and outline future work.
+\par X-ray imaging is a critical diagnostic tool used by medical professionals to diagnose and treat various illnesses and injuries. While the use of x-rays is essential to provide immediate, life-saving results, the amount of radiation dosage patients receive can be more than medically necessary. This excessive radiation exposure can increase the risk of cancer and other potential health risks, making it crucial to minimize the amount of radiation exposure patients receive during x-ray imaging \cite{RadiationEffects}.
 
-% \section{Ray Tracing}
+\par While one could minimize radiation dosage by adding shielding and/or changing the position of the target/x-ray source and obtain a reported dosage from the x-ray machine software, this approach has limitations. First, it is time-consuming in often urgent situations, and it still does not guarantee the optimal imaging parameters. Secondly, when it comes to resource-limited settings, the increased cost of imaging procedures due to this optimization procedure may not be financially viable.
+
+\par In addition to minimizing dosage, it's equally important to accurately quantify and record the amount of dosage a patient receives over time, for it is the cumulative dose which poses the greatest threat \cite{lauer2009elements}. Typically, exposure is measured using absorbed dose in the body and air kerma at the skin layer, which both have units of grays (joule/kg), making it directly related to the energy deposited by photons and their secondary particles. Often, these values are estimated based on the properties of the x-ray source and the specific procedure being performed. However, these are typically very rough estimates, thus necessitating a physics-based model that can accurately simulate the traversal of x-rays through a medium and calculate the associated dosage.
+
+\par To address these challenges, a research project focusing on the development and validation of a computational modeling approach for x-ray attenuation and medical imaging simulation using ray tracing was initially proposed. The goal of this approach was to accurately simulate the image one might obtain from an x-ray machine, while also estimating the associated dosage. This approach to x-ray simulation used ray tracing, a common graphics technique that simulates particles of light traveling in a 3D environment. In this environment, one could place models of objects and trace the path of photons through them. By using the objects' attenuation coefficient, which describes how strongly a material weakens or reduces the strength of x-rays as they pass through, and the distance light travels through the object, it was proposed that one would be able to calculate the attenuation of the x-ray and simulate the expected x-ray image.
+
+\section{Ray Tracing}
 \par Ray tracing is a computer graphics technique that involves tracing the path of rays as they pass through a virtual scene. Due to its ability to create highly-realistic images, ray tracing has been used extensively in animations, video games, scientific computing, and by designers who need a physically accurate design of a product. While not the only rendering technique or the fastest in computer graphics, its ability to consistently produce physically realistic renders has made it an indispensable tool in many industries. By accurately simulating the behavior of light, ray tracing can capture intricate details of how light interacts with objects, resulting in realistic shadows, reflections, refractions, and global illumination effects. This level of visual fidelity allows for the creation of visually stunning and immersive experiences that were previously challenging to achieve. As hardware capabilities continue to advance and real-time ray tracing becomes more accessible, its applications are expanding, and its impact on various fields is growing, pushing the boundaries of what is possible in computer graphics and visual simulation \cite{Peddie}.
 
 \section{The Brute Force Algorithm}
@@ -123,7 +127,7 @@ Notice a few properties of $\va*{R}$ that are intuitively clear:
   &\text{\textbullet}\quad \alpha, \beta, \gamma \geq 0 \label{eq:greater_than_0_bary}
 \end{align}
 
-With regard to the center of mass interpretation, Equation~\ref{eq:sum_to_1_bary} removes the computation of the denominator in Equation~\ref{eq:com}, while Equation~\ref{eq:greater_than_0_bary} eliminates the possibility of negative mass. For a rigorous proof of the requirements, see (find something).
+With regard to the center of mass interpretation, Equation~\ref{eq:sum_to_1_bary} removes the computation of the denominator in Equation~\ref{eq:com}, while Equation~\ref{eq:greater_than_0_bary} eliminates the possibility of negative mass. For a rigorous proof of the requirements, see \cite{capitan2015barycentric}.
 
 \subsection{Möller-Trumbore Intersection Algorithm} \label{sec:ray_tri_alg}
 \par The algorithm consists of 2 main steps:
@@ -158,30 +162,30 @@ Solving Equation~\ref{eq:sum_to_1_bary} for $\alpha$ and substituting into Equat
   \label{eq:r_no_alpha_bary_simp}
 \end{equation}
 
-\noindent Setting $\va*{r} = \va*{v}$ to find the barycentric coordinates for the ray-triangle intersection and solving for $\va*{r} - \va*{v_0}$ yields
+\noindent Setting $\va*{r} = \va*{v}$ to find the barycentric coordinates for the ray-triangle intersection and solving for $\va*{r_0} - \va*{v_0}$ yields
 
 \begin{equation}
-  \va*{r} - \va*{v_0} = -\vu*{d} + \beta \va*{e_1} + \gamma \va*{e_2}.
+  \va*{r_0} - \va*{v_0} = -\vu*{d}t + \beta \va*{e_1} + \gamma \va*{e_2}.
 \end{equation}
 
-\noindent One can then show that taking $(\va*{r} - \va*{v_0}) \vdot \va*{p}$ gives the following equation for $\beta$:
+\noindent One can then show that taking $(\va*{r_0} - \va*{v_0}) \vdot \va*{p}$ gives the following equation for $\beta$:
 
 \begin{equation}
-  \beta = \frac{(\va*{r} - \va*{v_0}) \vdot \va*{p}}{C},
+  \beta = \frac{(\va*{r_0} - \va*{v_0}) \vdot \va*{p}}{C},
   \label{eq:beta_bary}
 \end{equation}
 
-\noindent and similarly, taking $\vu*{d} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]$ results in
+\noindent and similarly, taking $\vu*{d} \vdot [(\va*{r_0} - \va*{v_0}) \cross \va*{e_1}]$ results in
 
 \begin{equation}
-  \gamma = \frac{\vu*{d} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]}{C}.
+  \gamma = \frac{\vu*{d} \vdot [(\va*{r_0} - \va*{v_0}) \cross \va*{e_1}]}{C}.
   \label{eq:gamma_bary}
 \end{equation}
 
-\noindent To then determine $t$ at which the ray-triangle intersection occurs, one can take $\va*{e_2} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]$, yielding
+\noindent To then determine $t$ at which the ray-triangle intersection occurs, one can take $\va*{e_2} \vdot [(\va*{r_0} - \va*{v_0}) \cross \va*{e_1}]$, yielding
 
 \begin{equation}
-  t = \frac{\va*{e_2} \vdot [(\va*{r} - \va*{v_0}) \cross \va*{e_1}]}{C}.
+  t = \frac{\va*{e_2} \vdot [(\va*{r_0} - \va*{v_0}) \cross \va*{e_1}]}{C}.
   \label{eq:t_bary}
 \end{equation}
 
@@ -285,14 +289,14 @@ With $l$ obtained from Equation~\ref{eq:l_for_M}, one can then calculate the eff
 
 
 \par For a flowchart summarizing the x-ray tracing algorithm introduced in this chapter, see Figure~\ref{fig:xray_trace_flowchart}.
-
+\newpage
 \begin{figure}[htb!]
   \centering
   \includegraphics[width=\textwidth]{chapter1/X-RayTracingAlgorithmFlowChart.pdf}
   \caption{A flowchart summarizing the x-ray tracing algorithm introduced in Chapter~\ref{cha:xray_tracing}.}
   \label{fig:xray_trace_flowchart}
 \end{figure}
-
+\newpage
 \section{Mass-Attenuation Coefficients and Material Definition Sources}
 In practice, one needs a source of the $\mu_m$'s used in Equation~\ref{eq:exp_atten_k}. The source of these values used by the x-ray tracing code is NIST's tables of x-ray mass-attenuation coefficients obtained by Hubbell \cite{hubbell1982photon}. These tables are given for each element $Z$, from which we can approximate $\mu_m$ of a material $M$ by taking the weighted average of the mass fractions of its constituent elements and their respective $\mu_m$'s. In particular, the mass-attenuation coefficient of a particular $M$ at $E$, composed of elements ${Z_i}$ with mass fractions ${w_i}$, is given by
 
@@ -303,11 +307,33 @@ In practice, one needs a source of the $\mu_m$'s used in Equation~\ref{eq:exp_at
 
 \noindent with {$Z_i$} and {$w_i$} of common materials provided by NIST \cite{hubbell1982photon}.
 
-\begin{figure}
+\section{Example Renders}
+With the x-ray tracing theory and methodology developed, it was then implemented in the programming language C++. For details on this implementation, see the source code in its GitHub repository \cite{xraytracing_git}. Located in Figure~\ref{fig:example_renders} are examples of x-ray images rendered using the program.
+
+\begin{figure}[htb!]
   \centering
-  \includegraphics[width=0.5\textwidth]{chapter1/coin.png}
-  \caption{A rendered x-ray image (grayscale inverted) of the ancient Chinese coin shown in Figure~\ref{fig:coin_mesh_render}, with $M$ being cortical bone and $E = \qty{30}{keV}$.}
+  \begin{subfigure}[b]{\textwidth}
+    \centering
+    \includegraphics[width=0.28\textwidth]{chapter1/coin.png}
+    \caption{Ancient Chinese Coin (shown in Figure~\ref{fig:coin_mesh_render}): $M =$ Bone, $E = \qty{30}{keV}$}
+  \end{subfigure}
+  \\[1ex]
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+      \includegraphics[width=0.45\textwidth]{chapter1/sodaCan.png}
+      \caption{Soda Can: $M =$ Aluminum, $E = \qty{40}{keV}$}
+  \end{subfigure}
+  \hfill % optional spacing
+  \begin{subfigure}[b]{0.45\textwidth}
+      \centering
+      \includegraphics[width=0.55\textwidth]{chapter1/anatomicallyCorrectHand.png}
+      \caption{Human Hand: $M =$ Bone, $E = \qty{40}{keV}$}
+  \end{subfigure}
+  \caption{A few example x-ray images rendered using the x-ray tracing code.}
+  \label{fig:example_renders}
 \end{figure}
+
+
 
 
 

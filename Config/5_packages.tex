@@ -62,7 +62,9 @@
 
 % \usepackage{subfig}
 
-
+\DefineBibliographyStrings{english}{%
+  bibliography = {References}
+}
 
 % \usepackage{indentfirst}       % Indent first list after a (sub)section title
 
@@ -71,7 +73,25 @@
 
 
 
-\usepackage{minted}    % Fontification of source code listings
+\usepackage{minted}
+\makeatletter
+\renewcommand{\minted@inputpyg}{%
+  \expandafter\let\expandafter\minted@PYGstyle%
+    \csname PYG\minted@get@opt{style}{default}\endcsname
+  \VerbatimPygments{\PYG}{\minted@PYGstyle}%
+  \ifthenelse{\boolean{minted@isinline}}%
+   {\ifthenelse{\equal{\minted@get@opt{breaklines}{false}}{true}}%
+    {\let\FV@BeginVBox\relax
+     \let\FV@EndVBox\relax
+     \def\FV@BProcessLine##1{%
+       \FancyVerbFormatLine{%
+         \FV@BreakByTokenAnywhereHook
+         \FancyVerbFormatText{\FancyVerbBreakStart##1\FancyVerbBreakStop}}}%
+     \minted@inputpyg@inline}%
+    {\minted@inputpyg@inline}}%
+   {\minted@inputpyg@block}%
+}
+\makeatother
 
 % \usepackage{listings}    % Fontification of source code listingsConfig/5_packages.tex
 %                          % In alternative, use the package “minted” (highly recomended)
